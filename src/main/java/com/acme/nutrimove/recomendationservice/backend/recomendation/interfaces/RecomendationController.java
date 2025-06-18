@@ -21,6 +21,7 @@ public class RecomendationController {
     // Obtener todas las recomendaciones
     @GetMapping
     public List<Recomendation> getAll() {
+
         return service.getAll();
     }
 
