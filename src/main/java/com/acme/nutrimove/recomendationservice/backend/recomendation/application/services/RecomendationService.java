@@ -1,5 +1,7 @@
 package com.acme.nutrimove.recomendationservice.backend.recomendation.application.services;
 
+import com.acme.nutrimove.recomendationservice.backend.recomendation.application.dto.RecomendationDto;
+import com.acme.nutrimove.recomendationservice.backend.recomendation.application.mapper.RecomendatioMapper;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.domain.Recomendation;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.infrastructure.RecomendationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class RecomendationService {
@@ -14,30 +17,40 @@ public class RecomendationService {
     @Autowired
     private RecomendationRepository repository;
 
-    public List<Recomendation> getAll() {
-        return repository.findAll();
+    @Autowired
+    private RecomendatioMapper mapper;
+
+    public List<RecomendationDto> getAll() {
+        return repository.findAll().stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Optional<Recomendation> getById(Long id) {
-        return repository.findById(id);
+    public Optional<RecomendationDto> getById(Long id) {
+        return repository.findById(id).map(mapper::toDto);
     }
 
-    public List<Recomendation> getByUserId(Long userId) {
-        return repository.findByUserId(userId);
+    public List<RecomendationDto> getByUserId(Long userId) {
+        return repository.findByUserId(userId).stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Recomendation create(Recomendation recomendation) {
-        return repository.save(recomendation);
+    public RecomendationDto create(RecomendationDto dto) {
+        Recomendation entity = mapper.toEntity(dto);
+        return mapper.toDto(repository.save(entity));
     }
 
-    public Optional<Recomendation> update(Long id, Recomendation recomendation) {
+    public Optional<RecomendationDto> update(Long id, RecomendationDto dto) {
         return repository.findById(id).map(existing -> {
-            existing.setUserId(recomendation.getUserId());
-            existing.setMessage(recomendation.getMessage());
-            existing.setType(recomendation.getType());
-            existing.setStatus(recomendation.getStatus());
-            existing.setTimestamp(recomendation.getTimestamp());
-            return repository.save(existing);
+            existing.setUserId(dto.getUserId());
+            existing.setNutritionistId(dto.getNutritionistId());
+            existing.setMessage(dto.getMessage());
+            existing.setAnswer(dto.getAnswer());
+            existing.setType(dto.getType());
+            existing.setStatus(dto.getStatus());
+            existing.setTimestamp(dto.getTimestamp());
+            return mapper.toDto(repository.save(existing));
         });
     }
 
