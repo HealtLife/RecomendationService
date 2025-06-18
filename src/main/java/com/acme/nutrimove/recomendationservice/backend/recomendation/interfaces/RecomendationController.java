@@ -1,7 +1,7 @@
 package com.acme.nutrimove.recomendationservice.backend.recomendation.interfaces;
 
 import com.acme.nutrimove.recomendationservice.backend.recomendation.domain.Recomendation;
-import com.acme.nutrimove.recomendationservice.backend.recomendation.application.RecomendationService;
+import com.acme.nutrimove.recomendationservice.backend.recomendation.application.services.RecomendationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

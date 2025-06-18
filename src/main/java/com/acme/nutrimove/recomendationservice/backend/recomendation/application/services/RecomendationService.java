@@ -1,4 +1,4 @@
-package com.acme.nutrimove.recomendationservice.backend.recomendation.application;
+package com.acme.nutrimove.recomendationservice.backend.recomendation.application.services;
 
 import com.acme.nutrimove.recomendationservice.backend.recomendation.domain.Recomendation;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.infrastructure.RecomendationRepository;

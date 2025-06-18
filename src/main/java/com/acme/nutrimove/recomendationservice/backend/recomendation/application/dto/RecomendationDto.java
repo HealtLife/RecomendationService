@@ -1,15 +1,8 @@
-package com.acme.nutrimove.recomendationservice.backend.recomendation.domain;
+package com.acme.nutrimove.recomendationservice.backend.recomendation.application.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-public class Recomendation {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+public class RecomendationDto {
     private Long userId;
     private Long nutritionistId;
     private String message;
@@ -17,27 +10,6 @@ public class Recomendation {
     private String type;
     private String status;
     private LocalDateTime timestamp;
-
-    public Recomendation() {
-    }
-
-    public Recomendation(Long userId, Long nutritionistId, String message, String answer, String type, String status, LocalDateTime timestamp) {
-        this.userId = userId;
-        this.nutritionistId = nutritionistId;
-        this.message = message;
-        this.answer = answer;
-        this.type = type;
-        this.status = status;
-        this.timestamp = timestamp;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Long getUserId() {
         return userId;
