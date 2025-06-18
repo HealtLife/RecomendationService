@@ -1,8 +1,10 @@
 package com.acme.nutrimove.recomendationservice.backend.recomendation.interfaces;
 
+import com.acme.nutrimove.recomendationservice.backend.recomendation.application.dto.NotificationDto;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.application.dto.RecomendationDto;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.domain.Recomendation;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.application.services.RecomendationService;
+import com.acme.nutrimove.recomendationservice.backend.recomendation.infrastructure.NotificationClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/recommendations")
+@RequestMapping("/api/v1/recomendations")
 public class RecomendationController {
 
     @Autowired
@@ -18,6 +20,10 @@ public class RecomendationController {
 
     @Autowired
     private MessageBrokerClient messageBrokerClient;
+
+    @Autowired
+    private NotificationClient notificationClient;
+
 
     @GetMapping
     public List<RecomendationDto> getAll() {
@@ -39,7 +45,7 @@ public class RecomendationController {
     @PostMapping
     public ResponseEntity<RecomendationDto> create(@RequestBody RecomendationDto dto) {
         RecomendationDto created = service.create(dto);
-        messageBrokerClient.sendMessage("New recommendation created: " + created.getUserId());
+        //messageBrokerClient.sendMessage("New recommendation created: " + created.getUserId());
         return ResponseEntity.ok(created);
     }
 
@@ -47,11 +53,23 @@ public class RecomendationController {
     public ResponseEntity<RecomendationDto> update(@PathVariable Long id, @RequestBody RecomendationDto dto) {
         return service.update(id, dto)
                 .map(updated -> {
+                    // Crear la notificación asociada
+                    NotificationDto notification = new NotificationDto();
+                    notification.setUserId(updated.getUserId());
+                    notification.setMessage("Tu recomendación ha sido actualizada.");
+                    notification.setType("RECOMMENDATION");
+                    notification.setStatus("UNREAD");
+                    notification.setTimestamp(java.time.LocalDateTime.now());
+
+                    notificationClient.createNotification(notification);
+
                     messageBrokerClient.sendMessage("Recommendation updated: " + updated.getUserId());
+
                     return ResponseEntity.ok(updated);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
