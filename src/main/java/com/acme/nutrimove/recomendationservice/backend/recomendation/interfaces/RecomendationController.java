@@ -1,14 +1,16 @@
 package com.acme.nutrimove.recomendationservice.backend.recomendation.interfaces;
 
-import com.acme.nutrimove.recomendationservice.backend.recomendation.application.dto.NotificationDto;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.application.dto.RecomendationDto;
-import com.acme.nutrimove.recomendationservice.backend.recomendation.domain.Recomendation;
 import com.acme.nutrimove.recomendationservice.backend.recomendation.application.services.RecomendationService;
-import com.acme.nutrimove.recomendationservice.backend.recomendation.infrastructure.NotificationClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.acme.nutrimove.recomendationservice.backend.recomendation.domain.events.RecommendationCreatedEvent;
+import com.acme.nutrimove.recomendationservice.backend.recomendation.infrastructure.broker.RecommendationEventPublisher;
 
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -19,10 +21,9 @@ public class RecomendationController {
     private RecomendationService service;
 
     @Autowired
-    private MessageBrokerClient messageBrokerClient;
+    private RecommendationEventPublisher eventPublisher;
 
-    @Autowired
-    private NotificationClient notificationClient;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_DATE; // "yyyy-MM-dd"
 
 
     @GetMapping
@@ -45,7 +46,15 @@ public class RecomendationController {
     @PostMapping
     public ResponseEntity<RecomendationDto> create(@RequestBody RecomendationDto dto) {
         RecomendationDto created = service.create(dto);
-        //messageBrokerClient.sendMessage("New recommendation created: " + created.getUserId());
+        // Construir evento con fecha como String (yyyy-MM-dd)
+        RecommendationCreatedEvent event = new RecommendationCreatedEvent(
+                created.getId(),
+                created.getUserId(),
+                "Nueva recomendación creada.",
+                LocalDate.now().format(DATE_FORMATTER) // 👈 Conversión a String
+        );
+        // Enviar al message broker
+        eventPublisher.publish(event);
         return ResponseEntity.ok(created);
     }
 
@@ -53,18 +62,13 @@ public class RecomendationController {
     public ResponseEntity<RecomendationDto> update(@PathVariable Long id, @RequestBody RecomendationDto dto) {
         return service.update(id, dto)
                 .map(updated -> {
-                    // Crear la notificación asociada
-                    NotificationDto notification = new NotificationDto();
-                    notification.setUserId(updated.getUserId());
-                    notification.setMessage("Tu recomendación ha sido actualizada.");
-                    notification.setType("RECOMMENDATION");
-                    notification.setStatus("UNREAD");
-                    notification.setTimestamp(java.time.LocalDateTime.now());
-
-                    notificationClient.createNotification(notification);
-
-                    messageBrokerClient.sendMessage("Recommendation updated: " + updated.getUserId());
-
+                    RecommendationCreatedEvent event = new RecommendationCreatedEvent(
+                            updated.getId(),
+                            updated.getUserId(),
+                            "Tu recomendación ha sido actualizada.",
+                            LocalDate.now().format(DATE_FORMATTER)
+                    );
+                    eventPublisher.publish(event);
                     return ResponseEntity.ok(updated);
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -72,9 +76,19 @@ public class RecomendationController {
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        messageBrokerClient.sendMessage("Recommendation deleted: " + id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Object> delete(@PathVariable Long id) {
+        return service.getById(id).map(deleted -> {
+            service.delete(id);
+
+            RecommendationCreatedEvent event = new RecommendationCreatedEvent(
+                    deleted.getId(),
+                    deleted.getUserId(),
+                    "Tu recomendación ha sido eliminada.",
+                    LocalDate.now().format(DATE_FORMATTER)
+            );
+            eventPublisher.publish(event);
+
+            return ResponseEntity.noContent().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

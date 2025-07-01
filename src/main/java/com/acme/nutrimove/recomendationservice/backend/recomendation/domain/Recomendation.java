@@ -1,6 +1,8 @@
 package com.acme.nutrimove.recomendationservice.backend.recomendation.domain;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,12 +18,12 @@ public class Recomendation {
     private String answer;
     private String type;
     private String status;
-    private LocalDateTime timestamp;
+    private String timestamp;
 
     public Recomendation() {
     }
 
-    public Recomendation(Long userId, Long nutritionistId, String message, String answer, String type, String status, LocalDateTime timestamp) {
+    public Recomendation(Long userId, Long nutritionistId, String message, String answer, String type, String status, String timestamp) {
         this.userId = userId;
         this.nutritionistId = nutritionistId;
         this.message = message;
@@ -87,11 +89,11 @@ public class Recomendation {
         this.status = status;
     }
 
-    public LocalDateTime getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 }

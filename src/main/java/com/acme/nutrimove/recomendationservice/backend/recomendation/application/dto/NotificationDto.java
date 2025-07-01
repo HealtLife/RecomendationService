@@ -1,5 +1,6 @@
 package com.acme.nutrimove.recomendationservice.backend.recomendation.application.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class NotificationDto {
@@ -7,7 +8,7 @@ public class NotificationDto {
     private String message;
     private String type;
     private String status;
-    private LocalDateTime timestamp;
+    private String timestamp;
 
     public Long getUserId() {
         return userId;
@@ -41,11 +42,11 @@ public class NotificationDto {
         this.status = status;
     }
 
-    public LocalDateTime getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 }
